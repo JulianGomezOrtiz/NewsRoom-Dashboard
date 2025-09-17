@@ -3,10 +3,8 @@ import './App.css';
 
 // --- CONTENIDO ESTÁTICO Y SIMULACIÓN DE API ---
 
-// Lista de categorías estáticas para el menú lateral.
 const categories = ['Política', 'Deportes', 'Tecnología', 'Economía'];
 
-// Datos de ejemplo para simular la respuesta de un endpoint.
 const mockNewsData = {
   Política: [
     { id: 1, title: 'El gobierno anuncia nuevas medidas económicas', excerpt: 'En una conferencia de prensa, el ministro de hacienda detalló el plan...' },
@@ -27,50 +25,67 @@ const mockNewsData = {
   ],
 };
 
-// Función que simula una llamada a un endpoint.
-// Devuelve los datos después de un breve retraso para simular la latencia de red.
+// Función simulada para traer noticias de una categoría
 const fetchNewsFromApi = (category) => {
-  console.log(`Buscando noticias para la categoría: ${category}...`);
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(mockNewsData[category] || []);
-    }, 500); // Simula 500ms de espera
+    }, 500);
   });
 };
 
+// Función simulada para buscar noticias en todas las categorías
+const fetchNewsBySearch = (query) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const allNews = Object.values(mockNewsData).flat();
+      const filtered = allNews.filter(
+        (item) =>
+          item.title.toLowerCase().includes(query.toLowerCase()) ||
+          item.excerpt.toLowerCase().includes(query.toLowerCase())
+      );
+      resolve(filtered);
+    }, 500);
+  });
+};
 
 // --- COMPONENTE PRINCIPAL ---
-
 function NewsroomDashboard() {
-  // Estado para guardar la categoría actualmente seleccionada.
   const [activeCategory, setActiveCategory] = useState(categories[0]);
-  // Estado para almacenar las noticias que se muestran a la derecha.
   const [news, setNews] = useState([]);
-  // Estado para mostrar un mensaje de carga mientras se obtienen los datos.
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // useEffect se ejecuta cuando el componente se monta y cada vez que `activeCategory` cambia.
-  // Aquí es donde se llama al endpoint.
   useEffect(() => {
-    setIsLoading(true); // Activa el estado de carga
-    
-    fetchNewsFromApi(activeCategory)
-      .then(data => {
-        setNews(data); // Actualiza el estado con las nuevas noticias
-        setIsLoading(false); // Desactiva el estado de carga
+    setIsLoading(true);
+
+    // Si hay texto en búsqueda, usar esa función
+    const fetchData = searchQuery
+      ? fetchNewsBySearch(searchQuery)
+      : fetchNewsFromApi(activeCategory);
+
+    fetchData
+      .then((data) => {
+        setNews(data);
+        setIsLoading(false);
       })
-      .catch(error => {
-        console.error("Error al cargar las noticias:", error);
-        setIsLoading(false); // También desactiva la carga si hay un error
+      .catch((error) => {
+        console.error("Error al cargar noticias:", error);
+        setIsLoading(false);
       });
-  }, [activeCategory]); // El efecto depende de `activeCategory`
+  }, [activeCategory, searchQuery]);
 
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
         <h1>Newsroom Dashboard</h1>
         <div className="search-bar">
-          <input type="text" placeholder="Buscar..." />
+          <input
+            type="text"
+            placeholder="Buscar..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </header>
       <div className="dashboard-body">
@@ -81,7 +96,10 @@ function NewsroomDashboard() {
                 <li
                   key={category}
                   className={activeCategory === category ? 'active' : ''}
-                  onClick={() => setActiveCategory(category)}
+                  onClick={() => {
+                    setActiveCategory(category);
+                    setSearchQuery(""); // limpiar búsqueda si se cambia de categoría
+                  }}
                 >
                   {category}
                 </li>
@@ -92,18 +110,15 @@ function NewsroomDashboard() {
         <main className="news-content">
           {isLoading ? (
             <p>Cargando noticias...</p>
-          ) : (
+          ) : news.length > 0 ? (
             news.map((item) => (
               <article key={item.id} className="news-card">
                 <h2>{item.title}</h2>
                 <p>{item.excerpt}</p>
-                <div className="card-actions">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
               </article>
             ))
+          ) : (
+            <p>No se encontraron noticias.</p>
           )}
         </main>
       </div>
