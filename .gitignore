@@ -1,0 +1,44 @@
+# === Node.js & React .gitignore ===
+
+# Dependencias
+node_modules/
+jspm_packages/
+
+# Build y compilados
+dist/
+build/
+.cache/
+.npm/
+.pnp/
+.pnp.js
+coverage/
+
+# Archivos de logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDEs / Editores
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Entornos
+.env
+.env.local
+.env.*.local
+
+# Testing
+coverage/
+*.l*
