@@ -1,42 +1,113 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* Estilos generales y contenedor principal */
+.dashboard-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  width: 100%; /* <-- Ocupa todo el ancho */
+  min-height: 100vh; /* <-- Ocupa al menos toda la altura de la pantalla */
+  display: flex; /* <-- Usamos flexbox para la estructura interna */
+  flex-direction: column; /* <-- Apila el header y el body verticalmente */
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Encabezado */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #eee;
+  background-color: #f9f9f9;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.dashboard-header h1 {
+  font-size: 1.25rem;
+  margin: 0;
+  color: #333;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.search-bar input {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  border-radius: 4px;
+  width: 200px;
 }
 
-.card {
-  padding: 2em;
+/* Cuerpo principal (Sidebar + Contenido) */
+.dashboard-body {
+  display: flex;
+  min-height: 500px;
 }
 
-.read-the-docs {
-  color: #888;
+/* Barra lateral de categorías */
+.sidebar {
+  width: 200px;
+  border-right: 1px solid #eee;
+  background-color: #fcfcfc;
+  padding: 1rem 0;
+}
+
+.sidebar nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar nav li {
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  color: #555;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar nav li:hover {
+  background-color: #f0f0f0;
+}
+
+/* Estilo para la categoría activa */
+.sidebar nav li.active {
+  background-color: #e0e7ff;
+  color: #4f46e5;
+  border-right: 3px solid #4f46e5;
+}
+
+/* Contenido de noticias */
+.news-content {
+  flex-grow: 1;
+  padding: 1.5rem;
+  background-color: #fff;
+}
+
+/* Tarjeta de cada noticia */
+.news-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.news-card h2 {
+  font-size: 1.1rem;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #111827;
+}
+
+.news-card p {
+  margin: 0;
+  color: #6b7280;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 1rem;
+}
+
+.card-actions span {
+  width: 12px;
+  height: 12px;
+  background-color: #d1d5db;
+  border-radius: 2px;
 }
