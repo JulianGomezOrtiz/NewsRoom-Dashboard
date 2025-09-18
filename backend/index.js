@@ -13,7 +13,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 
 const PORT = process.env.PORT || 3000;
-const NEWSAPI_KEY = process.env.NEWSAPI_KEY || '';
+const GNEWS_KEY = process.env.GNEWS_KEY || '977c6d36706b3ab764007aff97aa8bbb';
 
 const app = express();
 const server = http.createServer(app);
@@ -25,7 +25,7 @@ app.use(express.json());
 
 // cache y rate limit
 const cache = new NodeCache({ stdTTL: 30 });
-const limiter = rateLimit({ windowMs: 60 * 1000, max: 40, message: { error: 'Too many requests' }});
+const limiter = rateLimit({ windowMs: 60 * 1000, max: 40, message: { error: 'Too many requests' } });
 app.use('/api/', limiter);
 
 // data persistence simple (file-based)
@@ -52,25 +52,27 @@ function articleIdFromUrl(url) {
 
 /**
  * GET /api/news
- * Query params: q, category, sources, page, pageSize, country, sortBy
+ * Query params: q, lang, country, max, in, nullable: sortBy
  */
 app.get('/api/news', async (req, res) => {
   try {
-    const { q, category, sources, page = 1, pageSize = 20, country, sortBy } = req.query;
+    const { q, lang = 'es', country, max = 20, in: searchIn } = req.query;
     const cacheKey = `news:${JSON.stringify(req.query)}`;
     if (cache.has(cacheKey)) return res.json(cache.get(cacheKey));
 
-    if (!NEWSAPI_KEY) return res.status(500).json({ error: 'NEWSAPI_KEY not configured' });
+    if (!GNEWS_KEY) return res.status(500).json({ error: 'GNEWS_KEY not configured' });
 
-    const params = { apiKey: NEWSAPI_KEY, page, pageSize };
+    const params = { token: GNEWS_KEY, lang, max };
     if (q) params.q = q;
-    if (sources) params.sources = sources;
-    if (category) params.category = category;
     if (country) params.country = country;
-    if (sortBy) params.sortBy = sortBy;
+    if (searchIn) params.in = searchIn;
 
-    const endpoint = q ? 'https://newsapi.org/v2/everything' : 'https://newsapi.org/v2/top-headlines';
+    const endpoint = q
+      ? 'https://gnews.io/api/v4/search'
+      : 'https://gnews.io/api/v4/top-headlines';
+
     const response = await axios.get(endpoint, { params });
+
     const articles = (response.data.articles || []).map(a => {
       const id = articleIdFromUrl(a.url || a.title || JSON.stringify(a));
       const meta = articleMeta[id] || { read: false, relevant: false };
@@ -129,3 +131,75 @@ io.on('connection', socket => {
 });
 
 server.listen(PORT, () => console.log(`Newsroom backend running on http://localhost:${PORT}`));
+
+/**
+ * GET /api/news/category
+ * Query params: category (ej: general, world, nation, business, technology, entertainment, sports, science, health)
+ */
+app.get('/api/news/category', async (req, res) => {
+  try {
+    const { category = 'general', lang = 'es', country = 'us', max = 10 } = req.query;
+    const cacheKey = `news:category:${category}:${lang}:${country}:${max}`;
+    if (cache.has(cacheKey)) return res.json(cache.get(cacheKey));
+
+    const response = await axios.get('https://gnews.io/api/v4/top-headlines', {
+      params: { 
+        token: GNEWS_KEY, 
+        topic: category, 
+        lang, 
+        country, 
+        max 
+      }
+    });
+
+    const articles = (response.data.articles || []).map(a => {
+      const id = articleIdFromUrl(a.url || a.title || JSON.stringify(a));
+      const meta = articleMeta[id] || { read: false, relevant: false };
+      return { id, ...a, meta };
+    });
+
+    const out = { ...response.data, articles };
+    cache.set(cacheKey, out);
+    res.json(out);
+  } catch (err) {
+    console.error('category error', err.message || err);
+    res.status(500).json({ error: 'Failed to fetch category news' });
+  }
+});
+
+/**
+ * GET /api/news/search
+ * Query params: q (palabra clave obligatoria), lang, country, max
+ */
+app.get('/api/news/search', async (req, res) => {
+  try {
+    const { q, lang = 'es', country = 'us', max = 10 } = req.query;
+    if (!q) return res.status(400).json({ error: 'q (keyword) is required' });
+
+    const cacheKey = `news:search:${q}:${lang}:${country}:${max}`;
+    if (cache.has(cacheKey)) return res.json(cache.get(cacheKey));
+
+    const response = await axios.get('https://gnews.io/api/v4/search', {
+      params: { 
+        token: GNEWS_KEY, 
+        q, 
+        lang, 
+        country, 
+        max 
+      }
+    });
+
+    const articles = (response.data.articles || []).map(a => {
+      const id = articleIdFromUrl(a.url || a.title || JSON.stringify(a));
+      const meta = articleMeta[id] || { read: false, relevant: false };
+      return { id, ...a, meta };
+    });
+
+    const out = { ...response.data, articles };
+    cache.set(cacheKey, out);
+    res.json(out);
+  } catch (err) {
+    console.error('search error', err.message || err);
+    res.status(500).json({ error: 'Failed to fetch search news' });
+  }
+});
